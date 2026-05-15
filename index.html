@@ -1,0 +1,41 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI & Semiconductor Watchlist</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>AI & Semiconductor Watchlist</h1>
+    <p class="subtitle">
+      Auto-refresh every minute using Yahoo Finance quote data.
+      Extended hours prices are shown when available.
+    </p>
+
+    <div class="controls">
+      <button id="refreshBtn">Refresh Now</button>
+      <span id="lastUpdated">Loading...</span>
+    </div>
+
+    <table id="watchlist">
+      <thead>
+        <tr>
+          <th data-sort="name">Company</th>
+          <th data-sort="symbol">Ticker</th>
+          <th data-sort="price">Price</th>
+          <th data-sort="change">Change</th>
+          <th data-sort="changePct">% Change</th>
+          <th data-sort="session">Session</th>
+          <th data-sort="volume">Volume</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script src="watchlist.js?v=3"></script>
+</body>
+</html>
