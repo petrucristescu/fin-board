@@ -15,6 +15,9 @@ function renderTable() {
   if (sortKey) {
     rows.sort((a, b) => {
       const av = a[sortKey], bv = b[sortKey];
+      if (av === null && bv === null) return 0;
+      if (av === null) return 1;
+      if (bv === null) return -1;
       const cmp = typeof av === "string" ? av.localeCompare(bv) : av - bv;
       return sortDir === "asc" ? cmp : -cmp;
     });
@@ -26,11 +29,23 @@ function renderTable() {
       stock.change > 0 ? "positive" :
       stock.change < 0 ? "negative" : "neutral";
 
+    const cur = stock.currency;
+    const ahPrice = stock.afterHoursPrice;
+    const ahChange = stock.afterHoursChange;
+
+    const ahPriceClass = ahPrice === null ? "" : ahPrice > stock.price ? "positive" : ahPrice < stock.price ? "negative" : "neutral";
+    const ahChangeClass = ahChange === null ? "" : ahChange > 0 ? "positive" : ahChange < 0 ? "negative" : "neutral";
+
+    const ahPriceDisplay = ahPrice !== null ? `${ahPrice.toFixed(2)} <span class="currency">${cur}</span>` : "-";
+    const ahChangeDisplay = ahChange !== null ? `${ahChange > 0 ? "+" : ""}${ahChange.toFixed(2)}` : "-";
+
     const row = document.createElement("tr");
     row.innerHTML = `
       <td>${stock.name}</td>
       <td>${stock.symbol}</td>
-      <td>${stock.price.toFixed(2)}</td>
+      <td>${stock.price.toFixed(2)} <span class="currency">${cur}</span></td>
+      <td class="${ahPriceClass}">${ahPriceDisplay}</td>
+      <td class="${ahChangeClass}">${ahChangeDisplay}</td>
       <td class="${changeClass}">${stock.change.toFixed(2)}</td>
       <td class="${changeClass}">${stock.changePct.toFixed(2)}%</td>
       <td>${stock.session}</td>
@@ -72,15 +87,19 @@ async function fetchQuotes() {
       const prePrice = stock.preMarketPrice;
       const postPrice = stock.postMarketPrice;
 
-      let price = regularPrice;
       let session = "Regular";
-      if (prePrice && prePrice > 0) { price = prePrice; session = "Pre-Market"; }
-      if (postPrice && postPrice > 0) { price = postPrice; session = "After Hours"; }
+      if (prePrice && prePrice > 0) session = "Pre-Market";
+      if (postPrice && postPrice > 0) session = "After Hours";
+
+      const ahChange = stock.postMarketChange ?? null;
 
       return {
         name,
         symbol: stock.symbol,
-        price,
+        currency: stock.currency || "",
+        price: regularPrice,
+        afterHoursPrice: (postPrice && postPrice > 0) ? postPrice : null,
+        afterHoursChange: (ahChange !== null && ahChange !== 0) ? ahChange : null,
         change: stock.regularMarketChange ?? 0,
         changePct: stock.regularMarketChangePercent ?? 0,
         session,

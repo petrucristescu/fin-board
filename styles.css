@@ -105,6 +105,12 @@ tr:hover {
   color: #cbd5e1;
 }
 
+.currency {
+  font-size: 0.75em;
+  color: #64748b;
+  font-weight: normal;
+}
+
 @media (max-width: 900px) {
   table {
     font-size: 12px;

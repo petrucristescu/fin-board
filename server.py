@@ -9,7 +9,9 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 def fetch_quote(symbol):
     try:
-        fi = yf.Ticker(symbol).fast_info
+        ticker = yf.Ticker(symbol)
+        fi = ticker.fast_info
+        info = ticker.info
         prev = fi.previous_close
         last = fi.last_price
         change = (last - prev) if (last and prev) else 0
@@ -18,12 +20,14 @@ def fetch_quote(symbol):
             'symbol': symbol,
             'shortName': symbol,
             'longName': None,
+            'currency': fi.currency,
             'regularMarketPrice': last or 0,
             'regularMarketChange': change,
             'regularMarketChangePercent': pct,
             'regularMarketVolume': fi.last_volume or 0,
-            'preMarketPrice': None,
-            'postMarketPrice': None,
+            'preMarketPrice': info.get('preMarketPrice'),
+            'postMarketPrice': info.get('postMarketPrice'),
+            'postMarketChange': info.get('postMarketChange'),
         }
     except Exception:
         return None
