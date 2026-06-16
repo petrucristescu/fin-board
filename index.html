@@ -13,9 +13,14 @@
     <p class="subtitle">
       Auto-refresh every minute using Yahoo Finance quote data.
       Extended hours prices are shown when available.
+      <strong>Click any company</strong> for fundamentals, news, and analysis.
     </p>
 
     <div class="controls">
+      <div class="view-toggle">
+        <button id="viewTable" class="active">Table</button>
+        <button id="viewGrouped">Group by status</button>
+      </div>
       <button id="refreshBtn">Refresh Now</button>
       <span id="lastUpdated">Loading...</span>
     </div>
@@ -36,8 +41,53 @@
       </thead>
       <tbody></tbody>
     </table>
+
+    <div id="groupedView" class="hidden"></div>
   </div>
 
-  <script src="watchlist.js?v=3"></script>
+  <div id="panelOverlay" class="panel-overlay hidden"></div>
+  <aside id="detailPanel" class="detail-panel hidden" aria-hidden="true">
+    <div class="panel-header">
+      <div>
+        <h2 id="panelName">—</h2>
+        <span id="panelTicker" class="panel-ticker"></span>
+        <span id="panelBadge" class="badge"></span>
+      </div>
+      <button id="panelClose" class="panel-close" title="Close">✕</button>
+    </div>
+
+    <div class="panel-body">
+      <nav class="panel-tabs">
+        <button class="tab-btn active" data-tab="overview">Overview</button>
+        <button class="tab-btn" data-tab="news">News</button>
+        <button class="tab-btn" data-tab="ai">Ask AI</button>
+      </nav>
+
+      <section id="tab-overview" class="tab-pane active">
+        <div id="scorecard" class="scorecard"></div>
+        <div id="fundamentals" class="fundamentals">Loading…</div>
+        <a id="yahooLink" class="yahoo-link" target="_blank" rel="noopener">
+          View full financials on Yahoo Finance ↗
+        </a>
+      </section>
+
+      <section id="tab-news" class="tab-pane">
+        <div id="newsList" class="news-list">Loading…</div>
+      </section>
+
+      <section id="tab-ai" class="tab-pane">
+        <div id="aiPanel" class="ai-panel">
+          <button id="askAiBtn">Analyze with AI</button>
+          <p class="ai-note">
+            Sends current fundamentals and headlines to Claude for a Hold / Watch /
+            Reevaluate read. Not financial advice.
+          </p>
+          <div id="aiResult" class="ai-result"></div>
+        </div>
+      </section>
+    </div>
+  </aside>
+
+  <script src="watchlist.js?v=8"></script>
 </body>
 </html>
