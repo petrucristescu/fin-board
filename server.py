@@ -23,19 +23,34 @@ def fetch_quote(symbol):
         ticker = yf.Ticker(symbol)
         fi = ticker.fast_info
         info = ticker.info
-        prev = fi.previous_close
-        last = fi.last_price
-        change = (last - prev) if (last and prev) else 0
-        pct = (change / prev * 100) if prev else 0
+
+        # Prefer Yahoo's own regular-session fields so the displayed change
+        # matches finance.yahoo.com. Computing last - previous_close from
+        # fast_info is unreliable during extended hours, because last_price
+        # can return the pre/post-market price (off by the after-hours move).
+        last = info.get('regularMarketPrice')
+        if last is None:
+            last = fi.last_price
+        prev = info.get('regularMarketPreviousClose') or info.get('previousClose')
+        if prev is None:
+            prev = fi.previous_close
+
+        change = info.get('regularMarketChange')
+        if change is None:
+            change = (last - prev) if (last and prev) else 0
+        pct = info.get('regularMarketChangePercent')
+        if pct is None:
+            pct = (change / prev * 100) if prev else 0
+
         return {
             'symbol': symbol,
-            'shortName': symbol,
-            'longName': None,
-            'currency': fi.currency,
+            'shortName': info.get('shortName') or symbol,
+            'longName': info.get('longName'),
+            'currency': info.get('currency') or fi.currency,
             'regularMarketPrice': last or 0,
-            'regularMarketChange': change,
-            'regularMarketChangePercent': pct,
-            'regularMarketVolume': fi.last_volume or 0,
+            'regularMarketChange': change or 0,
+            'regularMarketChangePercent': pct or 0,
+            'regularMarketVolume': info.get('regularMarketVolume') or fi.last_volume or 0,
             'preMarketPrice': info.get('preMarketPrice'),
             'postMarketPrice': info.get('postMarketPrice'),
             'postMarketChange': info.get('postMarketChange'),
