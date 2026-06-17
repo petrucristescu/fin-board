@@ -51,7 +51,9 @@ def fetch_quote(symbol):
             'regularMarketChange': change or 0,
             'regularMarketChangePercent': pct or 0,
             'regularMarketVolume': info.get('regularMarketVolume') or fi.last_volume or 0,
+            'marketState': info.get('marketState'),
             'preMarketPrice': info.get('preMarketPrice'),
+            'preMarketChange': info.get('preMarketChange'),
             'postMarketPrice': info.get('postMarketPrice'),
             'postMarketChange': info.get('postMarketChange'),
         }

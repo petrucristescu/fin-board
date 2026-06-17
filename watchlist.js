@@ -32,8 +32,8 @@ const STATUS_GROUPS = [
 
 const COLS_HEADER = `
   <tr>
-    <th>Company</th><th>Ticker</th><th>Price</th><th>After Hours</th>
-    <th>AH Change</th><th>Change</th><th>% Change</th><th>Session</th><th>Volume</th>
+    <th>Company</th><th>Ticker</th><th>Price</th><th>Ext. Hours</th>
+    <th>Ext. Change</th><th>Change</th><th>% Change</th><th>Session</th><th>Volume</th>
   </tr>`;
 
 function statusOf(symbol) {
@@ -186,19 +186,27 @@ async function fetchQuotes() {
       const prePrice = stock.preMarketPrice;
       const postPrice = stock.postMarketPrice;
 
+      // Use whichever extended-hours session is currently active for the
+      // "Ext. Hours" columns, rather than always showing post-market.
       let session = "Regular";
-      if (prePrice && prePrice > 0) session = "Pre-Market";
-      if (postPrice && postPrice > 0) session = "After Hours";
-
-      const ahChange = stock.postMarketChange ?? null;
+      let extPrice = null, extChange = null;
+      if (prePrice && prePrice > 0) {
+        session = "Pre-Market";
+        extPrice = prePrice;
+        extChange = stock.preMarketChange ?? null;
+      } else if (postPrice && postPrice > 0) {
+        session = "After Hours";
+        extPrice = postPrice;
+        extChange = stock.postMarketChange ?? null;
+      }
 
       return {
         name,
         symbol: stock.symbol,
         currency: stock.currency || "",
         price: regularPrice,
-        afterHoursPrice: (postPrice && postPrice > 0) ? postPrice : null,
-        afterHoursChange: (ahChange !== null && ahChange !== 0) ? ahChange : null,
+        afterHoursPrice: extPrice,
+        afterHoursChange: (extChange !== null && extChange !== 0) ? extChange : null,
         change: stock.regularMarketChange ?? 0,
         changePct: stock.regularMarketChangePercent ?? 0,
         session,
