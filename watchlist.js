@@ -41,6 +41,17 @@ function statusOf(symbol) {
   return scores[symbol] || "No data";
 }
 
+function sessionLabel(state) {
+  switch (state) {
+    case "PRE":
+    case "PREPRE": return "Pre-Market";
+    case "POST":
+    case "POSTPOST": return "After Hours";
+    case "REGULAR": return "Regular";
+    default: return "Extended";
+  }
+}
+
 function sortRows(rows) {
   const r = [...rows];
   if (sortKey) {
@@ -186,11 +197,16 @@ async function fetchQuotes() {
       const prePrice = stock.preMarketPrice;
       const postPrice = stock.postMarketPrice;
 
-      // Use whichever extended-hours session is currently active for the
-      // "Ext. Hours" columns, rather than always showing post-market.
+      // Extended-hours columns. Prefer Finnhub's real-time price (covers
+      // overnight); otherwise fall back to whichever yfinance pre/post session
+      // is active.
       let session = "Regular";
       let extPrice = null, extChange = null;
-      if (prePrice && prePrice > 0) {
+      if (stock.extPrice != null) {
+        extPrice = stock.extPrice;
+        extChange = stock.extChange ?? null;
+        session = sessionLabel(stock.marketState);
+      } else if (prePrice && prePrice > 0) {
         session = "Pre-Market";
         extPrice = prePrice;
         extChange = stock.preMarketChange ?? null;

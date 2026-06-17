@@ -57,6 +57,24 @@ To enable it:
 If the key or package is missing, the rest of the dashboard works normally and the
 Ask AI button simply shows "AI not configured".
 
+## Extended-hours / overnight prices (optional Finnhub)
+
+yfinance's free feed does not carry Yahoo's overnight trading session, so the
+**Ext. Hours / Ext. Change** columns can lag what you see on finance.yahoo.com
+after the close. To get real-time extended-hours prices for **US tickers**, set a
+free [Finnhub](https://finnhub.io) API key:
+
+```bash
+export FINNHUB_API_KEY=...
+python server.py
+```
+
+When set, the server uses Finnhub's real-time price for the extended-hours columns
+while the market is closed; the regular-session Price/Change always stays on
+yfinance (which matches Yahoo's headline number). International tickers (with an
+exchange suffix like `.DE`, `.PA`, `.L`) are not covered by Finnhub's free tier
+and fall back to yfinance.
+
 ## API endpoints
 
 | Endpoint | Method | Purpose |

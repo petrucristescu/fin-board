@@ -1,6 +1,7 @@
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from socketserver import ThreadingMixIn
 import urllib.parse
+import urllib.request
 import json
 import os
 import time
@@ -16,6 +17,29 @@ _FUND_TTL = 600  # seconds
 
 # Model used for the optional "Ask AI" analysis. Override with ANTHROPIC_MODEL.
 ANALYSIS_MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-opus-4-8")
+
+# Optional: Finnhub provides real-time US quotes including extended/overnight
+# trading, which yfinance's free feed does not surface. Used only to fill the
+# extended-hours columns when a key is set; everything else stays on yfinance.
+FINNHUB_KEY = os.environ.get("FINNHUB_API_KEY")
+
+
+def finnhub_quote(symbol):
+    """Real-time quote from Finnhub. Free tier covers US tickers; symbols with
+    an exchange suffix (e.g. .DE, .PA, .L) are skipped. Returns the parsed dict
+    {c,d,dp,pc,t,...} or None."""
+    if not FINNHUB_KEY or "." in symbol:
+        return None
+    try:
+        url = ("https://finnhub.io/api/v1/quote?symbol="
+               + urllib.parse.quote(symbol) + "&token=" + FINNHUB_KEY)
+        with urllib.request.urlopen(url, timeout=10) as r:
+            d = json.load(r)
+        if d and d.get("c"):
+            return d
+    except Exception:
+        return None
+    return None
 
 
 def fetch_quote(symbol):
@@ -42,6 +66,20 @@ def fetch_quote(symbol):
         if pct is None:
             pct = (change / prev * 100) if prev else 0
 
+        state = info.get('marketState')
+
+        # When the regular session is closed, prefer Finnhub's real-time price
+        # for the extended-hours columns — it carries the overnight/pre/post
+        # trade that yfinance's free feed misses. During REGULAR hours we leave
+        # the (Yahoo-matching) yfinance figures alone.
+        ext_price = None
+        ext_change = None
+        if state and state != 'REGULAR' and last:
+            fh = finnhub_quote(symbol)
+            if fh and fh.get('c') and abs(fh['c'] - last) > 0.005:
+                ext_price = fh['c']
+                ext_change = fh['c'] - last
+
         return {
             'symbol': symbol,
             'shortName': info.get('shortName') or symbol,
@@ -51,11 +89,13 @@ def fetch_quote(symbol):
             'regularMarketChange': change or 0,
             'regularMarketChangePercent': pct or 0,
             'regularMarketVolume': info.get('regularMarketVolume') or fi.last_volume or 0,
-            'marketState': info.get('marketState'),
+            'marketState': state,
             'preMarketPrice': info.get('preMarketPrice'),
             'preMarketChange': info.get('preMarketChange'),
             'postMarketPrice': info.get('postMarketPrice'),
             'postMarketChange': info.get('postMarketChange'),
+            'extPrice': ext_price,
+            'extChange': ext_change,
         }
     except Exception:
         return None
